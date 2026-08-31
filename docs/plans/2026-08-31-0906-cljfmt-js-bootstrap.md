@@ -266,23 +266,23 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 - Create: `index.d.ts`
 - Modify: `package.json`, `bb.edn`, `README.md`
 
-- [ ] **Step 1: index.d.ts**
+- [x] **Step 1: index.d.ts**
   Exactly the API block from the design (opaque branded interfaces, JSDoc comments). Keep it in sync with `:exports` — six exports.
 
-- [ ] **Step 2: pack task**
+- [x] **Step 2: pack task**
   `bb pack`: depends on `build`; runs `npm pack`, which produces `abogoyavlensky-cljfmt-js-<version>.tgz` in the repo root.
   Run: `bb pack && tar tzf abogoyavlensky-cljfmt-js-0.1.0.tgz`
   Expected: `package/package.json`, `package/dist/cljfmt.js`, `package/index.d.ts`, `package/NOTICE`, `package/README.md`, `package/LICENSE` — nothing else.
 
-- [ ] **Step 3: Install smoke test from the tarball**
+- [x] **Step 3: Install smoke test from the tarball**
   Run: `D=$(mktemp -d) && cd $D && npm init -y >/dev/null && npm install /home/agent/Projects/cljfmt-js/abogoyavlensky-cljfmt-js-0.1.0.tgz && node -e 'const c=require("@abogoyavlensky/cljfmt-js"); console.log(c.cljfmtVersion, JSON.stringify(c.reformatString("(let [a 1]\n(inc a))", c.readConfig("{:function-arguments-indentation :cursive}"))))'`
   Expected: `0.16.5 "(let [a 1]\n  (inc a))"`.
   Also type-check the typings: in the same temp dir, `npm install typescript@latest -D`, write `t.ts` importing all six exports and calling them, run `npx tsc --noEmit t.ts`. Expected: no errors.
 
-- [ ] **Step 4: README API section**
+- [x] **Step 4: README API section**
   Document the six exports, the opaque-handle rule, the `readNsContext` use case (windowed formatting), install-from-release URL pattern, and the "package version vs `cljfmtVersion`" table with one row (`0.1.0` → `0.16.5`).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   `git add -A && git commit -m "Add typings, npm pack task and README API docs"`
 
 ### Task 6: Parity harness against JVM cljfmt

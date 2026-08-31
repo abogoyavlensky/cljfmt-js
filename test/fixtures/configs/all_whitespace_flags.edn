@@ -1,0 +1,4 @@
+{:remove-multiple-non-indenting-spaces? true
+ :remove-blank-lines-in-forms? true
+ :indent-line-comments? true
+ :normalize-newlines-at-file-end? true}

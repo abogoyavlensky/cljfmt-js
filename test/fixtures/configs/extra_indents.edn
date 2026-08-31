@@ -1,0 +1,5 @@
+{:extra-indents {#re "^my-"           [[:inner 0]]
+                 my.lib/mything       [[:inner 0]]
+                 other.lib/mything2   [[:inner 0]]
+                 other.lib/with-thing [[:block 1]]
+                 fixtures.aliases/mything3 [[:inner 0]]}}

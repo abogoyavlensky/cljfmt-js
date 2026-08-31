@@ -26,6 +26,27 @@
   build {:doc "Compile the release JS bundle into dist/cljfmt.js"
          :task (shell "npx shadow-cljs release lib")}
 
+  parity {:doc "Diff JS output against JVM cljfmt over every fixture x config"
+          :depends [build]
+          :task (do (shell "clojure -M:parity -m parity.jvm")
+                    (shell "node scripts/parity/js.mjs")
+                    (let [jvm-dir "target/parity/jvm"
+                          js-dir  "target/parity/js"
+                          names   (sort (map fs/file-name (fs/list-dir jvm-dir)))
+                          same?   (fn [name] (= (slurp (fs/file jvm-dir name))
+                                                (slurp (fs/file js-dir name))))
+                          bad     (remove same? names)]
+                      (doseq [name bad]
+                        (println)
+                        (println "MISMATCH:" name)
+                        (shell {:continue true}
+                               "diff -u" (str jvm-dir "/" name) (str js-dir "/" name)))
+                      (if (seq bad)
+                        (do (println)
+                            (println "parity:" (count bad) "of" (count names) "differ")
+                            (System/exit 1))
+                        (println "parity:" (str (count names) "/" (count names)) "identical"))))}
+
   pack {:doc "Build and npm-pack the release tarball into the repo root"
         :depends [build]
         :task (shell "npm pack")}
@@ -33,4 +54,7 @@
   test {:doc "Run the wrapper tests and cljfmt's own suite under node"
         :depends [vendor]
         :task (do (shell "npx shadow-cljs compile test")
-                  (shell "node target/test.js"))}}}
+                  (shell "node target/test.js"))}
+
+  check {:doc "Everything CI runs: build, tests, JVM parity"
+         :depends [build test parity]}}}
