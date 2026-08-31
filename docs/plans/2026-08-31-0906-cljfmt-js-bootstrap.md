@@ -213,7 +213,22 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 - Create: `src/cljfmt_js/ns_aliases.cljs`, `test/cljfmt_js/ns_aliases_test.cljs`
 - Modify: `src/cljfmt_js/core.cljs`, `NOTICE`
 
-- [ ] **Step 1: Write failing tests**
+
+> Deviation: the plan's ns-name mechanism does not exist. `reformat-form`
+> (cljfmt 0.16.5 `core.cljc:903-905`) sets `::ns-name` unconditionally from
+> `find-namespace`, so an incoming `:cljfmt.core/ns-name` option is discarded —
+> verified against the JVM, where passing it is equally a no-op. Aliases and
+> refers are unaffected (they are merged, `core.cljc:897-902`). The window
+> ns-name case is instead reproduced through `:refer-map`, which
+> `fully-qualified-symbol` consults for the same symbols one step earlier:
+> `ns-aliases/ns-name-refers` maps every unqualified symbol in the window to
+> the context's namespace at the *lowest* precedence, so real refers and
+> aliases still win. Public API and precedence are exactly as designed.
+> A second deviation: each map is passed through `stringify-map` *before*
+> merging, matching cljfmt's own order — merging first would leave a symbol
+> key and a string key for the same alias racing on map order.
+
+- [x] **Step 1: Write failing tests**
   Source under test:
   ```clojure
   (ns app.core (:require [my.lib :as ml] [other.lib :refer [defthing2]]))
@@ -229,20 +244,20 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
   - ns-name: config `{:extra-indents {app.core/defthing3 [[:inner 0]]}}` and an unqualified `(defthing3 z\n(inc z))` in the `app.core` file — whole text indents the body 2 (JVM behavior: the current ns qualifies it); the same form as a window indents 2 only when `read-ns-context` of the whole text is passed.
   - `read-ns-context` returns empty maps and no ns-name for text without an ns form; ignores an `ns` form that is not top-level.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
   Run: `bb test`
   Expected: FAIL — `read-ns-context` undefined, whole-text case not indented.
 
-- [ ] **Step 3: Port the derivation**
+- [x] **Step 3: Port the derivation**
   In `vendor/cljfmt/cljfmt/src/cljfmt/core.cljc` locate the `#?(:clj …)` functions `top-level-form`, `ns-require-form?`, `as-keyword?`, `refer-keyword?`, `symbol-node?`, `leftmost-symbol`, `ns-require-form-parent`, `join-ns-str`, `refer-zloc->refer-mapping`, `refer-map-for-form`, `as-zloc->alias-mapping`, `alias-map-for-form`, and how `reformat-form` combines them on `:clj` (`stringify-map`, merge order). Port them into `cljfmt-js.ns-aliases` as cljs (rewrite-clj is cross-platform; drop the reader conditionals). Expose `(derive source-string) → {:alias-map … :refer-map … :ns-name …}` (string keys/values, as `stringify-map` produces; ns-name via cljfmt's cross-platform `find-namespace` logic, ported or reused). In `reformat-form`, find the option key the ns-name is read from (Codex's reading: `:cljfmt.core/ns-name`) and how it is combined with the derived value on `:clj`.
   In `core.cljs`: `reformat-string` gains a 3-arity; effective `:alias-map` and `:refer-map` = `(merge derived ns-context-value config-value)`, and the effective ns-name = `(or config-value ns-context-value derived)`, assoc'd into the options (ns-name under cljfmt's own option key) before calling `cljfmt.core/reformat-string`. `read-ns-context` = `derive` (returned as an opaque map). Update `shadow-cljs.edn` `:exports` with `readNsContext` if not already present.
   Update `NOTICE`: list the ported function names and the cljfmt version/file they came from.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
   Run: `bb test`
   Expected: PASS, including cljfmt's suite (unchanged behavior when no ns form is present).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   `git add -A && git commit -m "Derive ns aliases and refers on CLJS to match JVM cljfmt"`
 
 ### Task 5: Typings, packaging, install smoke test

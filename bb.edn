@@ -26,6 +26,10 @@
   build {:doc "Compile the release JS bundle into dist/cljfmt.js"
          :task (shell "npx shadow-cljs release lib")}
 
+  pack {:doc "Build and npm-pack the release tarball into the repo root"
+        :depends [build]
+        :task (shell "npm pack")}
+
   test {:doc "Run the wrapper tests and cljfmt's own suite under node"
         :depends [vendor]
         :task (do (shell "npx shadow-cljs compile test")
