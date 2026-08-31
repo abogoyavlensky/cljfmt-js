@@ -2,4 +2,8 @@
  {:enter (println "Running task:" (:name (current-task)))
 
   build {:doc "Compile the release JS bundle into dist/cljfmt.js"
-         :task (shell "npx shadow-cljs release lib")}}}
+         :task (shell "npx shadow-cljs release lib")}
+
+  test {:doc "Run the wrapper tests and cljfmt's own suite under node"
+        :task (do (shell "npx shadow-cljs compile test")
+                  (shell "node target/test.js"))}}}

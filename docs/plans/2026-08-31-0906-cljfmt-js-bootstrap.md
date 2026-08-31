@@ -129,12 +129,12 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 **Files:**
 - Create: `mise.toml`, `.gitignore`, `LICENSE`, `NOTICE`, `deps.edn`, `shadow-cljs.edn`, `package.json`, `bb.edn`, `README.md` (stub), `src/cljfmt_js/core.cljs` (placeholder export)
 
-- [ ] **Step 1: Tooling files**
+- [x] **Step 1: Tooling files**
   `mise.toml` with the four pinned tools from the design. `.gitignore` per the file structure. `LICENSE` = MIT, copyright Andrey Bogoyavlenskiy 2026. `NOTICE`: EPL-1.0 notice text for cljfmt (Copyright © James Reeves) and rewrite-clj, with a placeholder line for the ported-functions list (filled in Task 4).
   Run: `cd /home/agent/Projects/cljfmt-js && mise install && mise exec -- java -version && mise exec -- clojure --version && mise exec -- bb --version`
   Expected: temurin 25, Clojure CLI 1.12.5.1664, babashka 1.13.219 all print. (If the `clojure` mise plugin needs `java` on PATH first, note the ordering in README.)
 
-- [ ] **Step 2: deps.edn**
+- [x] **Step 2: deps.edn**
   ```clojure
   {:paths ["src"]
    :deps {thheller/shadow-cljs {:mvn/version "3.5.0"}
@@ -147,18 +147,18 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
   ```
   Look up antq's latest release at https://clojars.org/api/artifacts/com.github.liquidz/antq and pin it.
 
-- [ ] **Step 3: shadow-cljs.edn and package.json**
+- [x] **Step 3: shadow-cljs.edn and package.json**
   `shadow-cljs.edn`: `:deps {:aliases [:test]}`; build `:lib` — `:target :node-library`, `:output-to "dist/cljfmt.js"`, `:exports` mapping `readConfig mergeConfig defaultConfig readNsContext reformatString cljfmtVersion` to `cljfmt-js.core/…` vars, `:compiler-options {:optimizations :advanced}`; build `:test` — `:target :node-test`, `:output-to "target/test.js"`, `:ns-regexp "^(cljfmt\\.core-test|cljfmt-js\\..*-test)$"`.
   `package.json`: `name "@abogoyavlensky/cljfmt-js"`, `version "0.1.0"`, `description`, `license "MIT"`, `main "dist/cljfmt.js"`, `types "index.d.ts"`, `files ["dist/cljfmt.js", "index.d.ts", "NOTICE"]`, `engines {"node": ">=18"}`, `repository`, `devDependencies {"shadow-cljs": "3.5.0"}`. No `scripts` — bb owns tasks.
   Run: `npm install`
   Expected: `node_modules/shadow-cljs` present, `package-lock.json` created.
 
-- [ ] **Step 4: Placeholder namespace and build task**
+- [x] **Step 4: Placeholder namespace and build task**
   `src/cljfmt_js/core.cljs` with the six vars as stubs (`reformat-string` may call `cljfmt.core/reformat-string` directly already — that proves cljfmt compiles under CLJS, including its `read-resource` macro inlining the indent resources). `bb.edn` with `build` (`npx shadow-cljs release lib`) and an `:enter` line like clj-pulse's.
   Run: `bb build && node -e 'const c=require("./dist/cljfmt.js"); console.log(c.reformatString("(defn f [x]\n(inc x))"))'`
   Expected: prints `(defn f [x]\n  (inc x))`. If shadow warns about `cljfmt.core` needing `read-resource` macros, confirm `cljfmt/indents/*.clj` resources are on the classpath (they ship in the jar) before changing anything.
 
-- [ ] **Step 5: README stub and first commit + push**
+- [x] **Step 5: README stub and first commit + push**
   README: one paragraph of purpose and "work in progress". Commit and push; the first pushed branch becomes GitHub's default.
   Run: `git add -A && git commit -m "Bootstrap cljfmt-js: mise, deps, shadow build, placeholder API" && git push -u origin master && gh repo view --json defaultBranchRef --jq .defaultBranchRef.name`
   Expected: `master`. If not, run `gh repo edit --default-branch master`.
