@@ -71,10 +71,10 @@ const ctx = readNsContext(wholeFileText);        // aliases, refers, ns name
 reformatString(windowText, config, ctx);
 ```
 
-Values derived from the text you pass to `reformatString` win over `nsContext`,
-and your `config`'s own `:alias-map` / `:refer-map` win over both — cljfmt's
-own precedence. Formatting a whole file needs no context: cljfmt finds the `ns`
-form itself.
+Precedence runs low to high: aliases and refers derived from the text you pass
+to `reformatString`, then `nsContext`, then your `config`'s own `:alias-map` /
+`:refer-map`, which win — cljfmt's own order with the context slotted in.
+Formatting a whole file needs no context: cljfmt finds the `ns` form itself.
 
 ## Versioning
 
