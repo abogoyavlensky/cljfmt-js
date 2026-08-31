@@ -96,6 +96,25 @@ Formatting a whole file needs no context: cljfmt finds the `ns` form itself.
 immutable because consumers pin a URL and an integrity hash: to correct a bad
 release, bump the version and release again.
 
+## Keeping cljfmt current
+
+`cljfmt-update.yml` runs every Monday (and on demand). antq bumps
+`dev.weavejester/cljfmt` in `deps.edn`; if that changed, the workflow rewrites
+the version literal in `test/cljfmt_js/core_test.cljs` and the table above,
+runs `bb check` itself, and opens a PR whose body carries the verdict. It runs
+the checks in-job because a PR opened with `GITHUB_TOKEN` does not trigger
+`ci.yml`.
+
+Merging is manual. A ❌ verdict means cljfmt changed formatting behavior or the
+internals the wrapper leans on — read the run log before merging. After
+merging, bump `version` in `package.json` and release.
+
+> **Repository setting required.** Opening the PR needs *Settings → Actions →
+> General → Workflow permissions → "Allow GitHub Actions to create and approve
+> pull requests"*. Without it the workflow does all its work and then fails the
+> last step with `GitHub Actions is not permitted to create or approve pull
+> requests`.
+
 ## License
 
 MIT — see `LICENSE`. The distributed bundle embeds cljfmt and rewrite-clj, both

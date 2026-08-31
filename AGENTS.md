@@ -52,6 +52,9 @@ test asserting a string you worked out by hand — let the JVM decide.
 - Each alias/refer map must go through `stringify-map` *before* merging, the way
   cljfmt does it. Merging first leaves a symbol key and a string key for the
   same alias racing on map order.
+- `cljfmt-update.yml` cannot open its PR until *Settings → Actions → General →
+  Workflow permissions → "Allow GitHub Actions to create and approve pull
+  requests"* is enabled. Everything before that step is verified working.
 - Test fixtures should avoid `def`-prefixed macro names: cljfmt's default
   indents already carry `#"^def(?!ault)(?!late)(?!er)"`, so such a name formats
   correctly even when resolution does nothing, and the test proves nothing.
