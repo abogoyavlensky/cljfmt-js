@@ -84,6 +84,18 @@ Formatting a whole file needs no context: cljfmt finds the `ns` form itself.
 | --- | --- |
 | 0.1.0 | 0.16.5 |
 
+## Release
+
+1. Bump `version` in `package.json` (and the table above).
+2. Commit and push; CI must be green.
+3. `bb tag` — tags `v<version>` and pushes it. `release.yml` then re-runs
+   `bb check`, packs the tarball, and attaches it plus `checksums.txt` to a
+   GitHub Release.
+
+`bb tag` refuses to run on a dirty tree or over an existing tag. Assets are
+immutable because consumers pin a URL and an integrity hash: to correct a bad
+release, bump the version and release again.
+
 ## License
 
 MIT — see `LICENSE`. The distributed bundle embeds cljfmt and rewrite-clj, both

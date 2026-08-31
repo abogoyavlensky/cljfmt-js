@@ -1,5 +1,6 @@
 {:tasks
  {:init (do (require '[babashka.fs :as fs]
+                     '[cheshire.core :as json]
                      '[clojure.edn :as edn]
                      '[clojure.string :as str])
             (defn cljfmt-version
@@ -60,4 +61,23 @@
                   (shell "node target/test.js"))}
 
   check {:doc "Everything CI runs: build, tests, JVM parity"
-         :depends [build test parity]}}}
+         :depends [build test parity]}
+
+  tag {:doc "Tag HEAD as v<version from package.json> and push it (triggers the release workflow)"
+       :task (let [version (-> (slurp "package.json") (json/parse-string true) :version)
+                   tag     (str "v" version)]
+               (when (str/blank? (str version))
+                 (binding [*out* *err*] (println "Could not read version from package.json"))
+                 (System/exit 1))
+               (when-not (str/blank? (:out (shell {:out :string} "git status --porcelain")))
+                 (binding [*out* *err*] (println "Working tree is dirty; commit before tagging."))
+                 (System/exit 1))
+               (when (zero? (:exit (shell {:continue true :out :string :err :string}
+                                          "git rev-parse --verify" (str tag "^{tag}"))))
+                 (binding [*out* *err*]
+                   (println tag "already exists. Release assets are immutable — bump"
+                            "the version in package.json and fix forward."))
+                 (System/exit 1))
+               (println "Tagging" tag "and pushing to origin...")
+               (shell "git tag -a" tag "-m" (str "cljfmt-js " version))
+               (shell "git push origin" tag))}}}

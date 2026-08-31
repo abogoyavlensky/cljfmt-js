@@ -318,13 +318,13 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 **Files:**
 - Create: `.github/workflows/ci.yml`, `AGENTS.md`
 
-- [ ] **Step 1: ci.yml**
+- [x] **Step 1: ci.yml**
   Trigger: push and pull_request on `master`. Steps: `actions/checkout@v5`, `jdx/mise-action@v3.6.1` (cache on), `npm ci`, `bb check`. Cache `~/.m2` keyed on `deps.edn` (`actions/cache@v4`) to keep runs short.
 
-- [ ] **Step 2: AGENTS.md**
+- [x] **Step 2: AGENTS.md**
   Short, in clj-pulse's style: verification (`bb check` before claiming anything works; what each of `test` / `parity` covers), invariants (deps.edn is the only place the cljfmt version lives; the version literal in `core_test.cljs` must be bumped with it; `:exports`, `index.d.ts` and README must list the same six names; tags/assets are immutable; no filesystem access in the library; `vendor/` is disposable).
 
-- [ ] **Step 3: Push and watch**
+- [x] **Step 3: Push and watch**
   Run: `git add -A && git commit -m "Add CI workflow and AGENTS.md" && git push && gh run watch --exit-status`
   Expected: the `Check` run passes. Fix and re-push until green.
 
