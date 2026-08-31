@@ -37,4 +37,19 @@ Distributed under the Eclipse Public License 1.0, available at:
 Ported code
 -----------
 
-TBD (filled in when the ns-alias shim lands).
+`src/cljfmt_js/ns_aliases.cljs` contains ClojureScript ports of definitions
+that cljfmt 0.16.5 compiles on the JVM only (they sit behind `#?(:clj …)` or
+are private), taken from `cljfmt/src/cljfmt/core.cljc` at tag 0.16.5:
+
+  find-all              root?                  root
+  top?                  meta?                  skip-meta
+  token?                ns-token?              ns-form?
+  top-level-form        symbol-node?           leftmost-symbol
+  ns-require-form?      as-keyword?            refer-keyword?
+  ns-require-form-parent                       join-ns-str
+  refer-zloc->refer-mapping                    refer-map-for-form
+  as-zloc->alias-mapping                       alias-map-for-form
+  find-namespace        stringify-map
+
+These ports are covered by cljfmt's Eclipse Public License 1.0, not by the
+MIT license of the surrounding wrapper.

@@ -169,27 +169,27 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 - Create: `src/cljfmt_js/macros.clj`, `test/cljfmt_js/core_test.cljs`
 - Modify: `src/cljfmt_js/core.cljs`, `bb.edn`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
   `cljfmt-js.core-test` (cljs.test) covering:
   - `read-config` parses `{:extra-indents {#re "^with-" [[:inner 0]]}}` into a map whose key is a `js/RegExp`; `{:legacy/merge-indents? true :indents {foo [[:inner 0]]}}` becomes `:extra-indents`; invalid EDN throws.
   - `default-config` equals `cljfmt.core/default-options`; `merge-config` — override wins.
   - `reformat-string` with defaults: `(foo bar\nbaz)` → `(foo bar\n     baz)`; with `{:function-arguments-indentation :cursive}`: `(foo\nbar)` → `(foo\n  bar)`; with `:extra-indents` `#re "^with-"` `:inner 0`: `(with-x y\nz)` → 2-space body; unbalanced `(foo` throws.
   - `cljfmt-version` equals the version string in `deps.edn` (test reads it via the same macro is circular — instead assert it matches `#"^\d+\.\d+\.\d+$"` and equals `"0.16.5"` literally; the literal is updated by the antq PR, which is desirable: it forces the test file to acknowledge bumps. **Decision:** keep the literal; the update PR must touch it.)
 
-- [ ] **Step 2: Add the test task and run it to verify failure**
+- [x] **Step 2: Add the test task and run it to verify failure**
   `bb.edn` `test` task: `npx shadow-cljs compile test && node target/test.js`.
   Run: `bb test`
   Expected: FAIL (missing vars / wrong output).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
   `macros.clj`: `(defmacro cljfmt-version [] (-> "deps.edn" slurp edn/read-string :deps (get 'dev.weavejester/cljfmt) :mvn/version))`.
   `core.cljs`: `read-config` = `cljs.tools.reader.edn/read-string {:readers {'re re-pattern}}` then legacy-key conversion (port of `cljfmt.config/convert-legacy-keys`: when `:legacy/merge-indents?`, rename `:indents` → `:extra-indents` and drop the flag — verify against `vendor/cljfmt/cljfmt/src/cljfmt/config.clj` once Task 3 vendors it, or read it on GitHub now). `merge-config` = `merge`. `default-config` = `cljfmt.core/default-options`. `reformat-string` (2-arity for now) = `(cljfmt.core/reformat-string text (or config default-config))`. `cljfmt-version` via the macro. Exceptions propagate untouched.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
   Run: `bb test`
   Expected: all pass, `0 failures, 0 errors`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   `git add -A && git commit -m "Add wrapper API: readConfig, mergeConfig, defaultConfig, reformatString, cljfmtVersion"`
 
 ### Task 3: Run cljfmt's own test suite under the CLJS build
@@ -197,14 +197,14 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 **Files:**
 - Modify: `bb.edn`
 
-- [ ] **Step 1: Vendor task**
+- [x] **Step 1: Vendor task**
   `bb vendor`: read the cljfmt version from `deps.edn` (`edn/read-string`), then if `vendor/cljfmt/.version` does not contain it, `rm -rf vendor/cljfmt` and `git clone --depth 1 --branch <ver> https://github.com/weavejester/cljfmt.git vendor/cljfmt`, then write `.version`. First check the tag format: `git ls-remote --tags https://github.com/weavejester/cljfmt.git | grep 0.16.5` — use `v`-prefixed tags if that is what exists. Make `test` depend on `vendor`.
 
-- [ ] **Step 2: Run cljfmt's suite**
+- [x] **Step 2: Run cljfmt's suite**
   Run: `bb test`
   Expected: `cljfmt.core-test` is picked up by the `:ns-regexp` and passes alongside the wrapper tests. Likely snags: `cljfmt.test-util.cljs` is a `.clj` macro namespace that must be on the classpath (it is, under `vendor/cljfmt/cljfmt/test`); if any test relies on JVM-only helpers, check how cljfmt's own `lein test-all` (cljsbuild, `cljfmt.test-runner`) runs the same namespace — it runs exactly `cljfmt.core-test` on node, so the whole namespace is expected to pass. Do not skip tests; fix the classpath.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
   `git commit -am "Run cljfmt's own core tests under the CLJS build"`
 
 ### Task 4: ns-alias parity shim (TDD)
