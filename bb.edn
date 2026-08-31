@@ -1,9 +1,32 @@
 {:tasks
- {:enter (println "Running task:" (:name (current-task)))
+ {:init (do (require '[babashka.fs :as fs]
+                     '[clojure.edn :as edn]
+                     '[clojure.string :as str])
+            (defn cljfmt-version
+              "deps.edn is the single source of truth for the bundled version."
+              []
+              (or (-> (slurp "deps.edn") edn/read-string :deps
+                      (get 'dev.weavejester/cljfmt) :mvn/version)
+                  (throw (ex-info "dev.weavejester/cljfmt not found in deps.edn" {})))))
+
+  :enter (println "Running task:" (:name (current-task)))
+
+  vendor {:doc "Shallow-clone cljfmt at the pinned version into vendor/ — its test suite is not in the jar"
+          :task (let [version (cljfmt-version)
+                      dir     "vendor/cljfmt"
+                      stamp   (str dir "/.version")]
+                  (if (and (fs/exists? stamp) (= version (str/trim (slurp stamp))))
+                    (println "cljfmt" version "already vendored")
+                    (do (println "Vendoring cljfmt" version)
+                        (fs/delete-tree dir)
+                        (shell "git clone --quiet --depth 1 --branch" version
+                               "https://github.com/weavejester/cljfmt.git" dir)
+                        (spit stamp version))))}
 
   build {:doc "Compile the release JS bundle into dist/cljfmt.js"
          :task (shell "npx shadow-cljs release lib")}
 
   test {:doc "Run the wrapper tests and cljfmt's own suite under node"
+        :depends [vendor]
         :task (do (shell "npx shadow-cljs compile test")
                   (shell "node target/test.js"))}}}
