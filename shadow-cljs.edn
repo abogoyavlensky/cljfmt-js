@@ -1,0 +1,21 @@
+;; Dependencies live in deps.edn — it is the single source of truth for the
+;; bundled cljfmt version. The :test alias is always active so the vendored
+;; cljfmt test sources are on the classpath for the :test build.
+{:deps {:aliases [:test]}
+
+ :builds
+ {:lib
+  {:target :node-library
+   :output-to "dist/cljfmt.js"
+   :exports {:readConfig     cljfmt-js.core/read-config
+             :mergeConfig    cljfmt-js.core/merge-config
+             :defaultConfig  cljfmt-js.core/default-config
+             :readNsContext  cljfmt-js.core/read-ns-context
+             :reformatString cljfmt-js.core/reformat-string
+             :cljfmtVersion  cljfmt-js.core/cljfmt-version}
+   :compiler-options {:optimizations :advanced}}
+
+  :test
+  {:target :node-test
+   :output-to "target/test.js"
+   :ns-regexp "^(cljfmt\\.core-test|cljfmt-js\\..*-test)$"}}}

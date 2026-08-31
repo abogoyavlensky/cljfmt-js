@@ -1,0 +1,23 @@
+{
+  "name": "@abogoyavlensky/cljfmt-js",
+  "version": "0.1.0",
+  "description": "cljfmt compiled to JavaScript — format Clojure source in-process, exactly as the JVM cljfmt CLI does",
+  "license": "MIT",
+  "main": "dist/cljfmt.js",
+  "types": "index.d.ts",
+  "files": [
+    "dist/cljfmt.js",
+    "index.d.ts",
+    "NOTICE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abogoyavlensky/cljfmt-js.git"
+  },
+  "devDependencies": {
+    "shadow-cljs": "3.5.0"
+  }
+}

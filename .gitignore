@@ -1,0 +1,9 @@
+node_modules/
+vendor/
+dist/
+target/
+.shadow-cljs/
+.cpcache/
+*.tgz
+.tmp/
+.nrepl-port

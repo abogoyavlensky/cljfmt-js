@@ -1,0 +1,5 @@
+{:tasks
+ {:enter (println "Running task:" (:name (current-task)))
+
+  build {:doc "Compile the release JS bundle into dist/cljfmt.js"
+         :task (shell "npx shadow-cljs release lib")}}}

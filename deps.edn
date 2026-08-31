@@ -1,0 +1,14 @@
+{:paths ["src"]
+ :deps {thheller/shadow-cljs {:mvn/version "3.5.0"}
+        dev.weavejester/cljfmt {:mvn/version "0.16.5"}}
+
+ :aliases
+ {;; `test` puts the wrapper tests and cljfmt's own (vendored) test sources on
+  ;; the classpath. `bb vendor` populates vendor/cljfmt.
+  :test {:extra-paths ["test" "vendor/cljfmt/cljfmt/test"]}
+
+  ;; JVM side of the differential parity harness — the oracle.
+  :parity {:extra-paths ["scripts/parity"]}
+
+  :outdated {:deps {com.github.liquidz/antq {:mvn/version "2.11.1276"}}
+             :main-opts ["-m" "antq.core"]}}}

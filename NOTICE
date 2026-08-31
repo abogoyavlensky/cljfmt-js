@@ -1,0 +1,40 @@
+cljfmt-js
+=========
+
+The cljfmt-js wrapper (everything under `src/cljfmt_js/`, `test/`, `scripts/`,
+`index.d.ts` and the build configuration) is Copyright (c) 2026 Andrey
+Bogoyavlenskiy and is released under the MIT License (see LICENSE).
+
+The distributed JavaScript bundle (`dist/cljfmt.js`) embeds compiled code from
+the third-party projects listed below. Their licenses apply to that code.
+
+
+cljfmt
+------
+
+Copyright © 2024 James Reeves
+
+https://github.com/weavejester/cljfmt
+
+Distributed under the Eclipse Public License, the same as Clojure. A copy of
+the Eclipse Public License 1.0 is available at:
+
+  https://www.eclipse.org/legal/epl-v10.html
+
+
+rewrite-clj
+-----------
+
+Copyright © 2013-2016 Yannick Scherer, 2020-2024 Lee Read and contributors
+
+https://github.com/clj-commons/rewrite-clj
+
+Distributed under the Eclipse Public License 1.0, available at:
+
+  https://www.eclipse.org/legal/epl-v10.html
+
+
+Ported code
+-----------
+
+TBD (filled in when the ns-alias shim lands).
