@@ -44,6 +44,9 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          # Assets are immutable: consumers pin a URL plus an integrity hash,
+          # so a rerun must fail rather than replace a published tarball.
+          overwrite_files: false
           files: |
             abogoyavlensky-cljfmt-js-*.tgz
             checksums.txt
