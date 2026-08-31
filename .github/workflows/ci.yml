@@ -1,0 +1,29 @@
+name: Check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Installs java, clojure, node and babashka pinned in mise.toml,
+      # matching local dev.
+      - uses: jdx/mise-action@v3.6.1
+
+      # Maven downloads dominate a cold run; deps.edn pins every version.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: m2-${{ hashFiles('deps.edn') }}
+          restore-keys: m2-
+
+      - run: npm ci
+
+      # build + wrapper tests + cljfmt's own suite + JVM-vs-JS parity
+      - run: bb check

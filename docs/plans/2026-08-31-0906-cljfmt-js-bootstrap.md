@@ -291,7 +291,7 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 - Create: `test/fixtures/*.clj`, `test/fixtures/configs/*.edn`, `scripts/parity/parity/jvm.clj`, `scripts/parity/js.mjs`
 - Modify: `bb.edn`
 
-- [ ] **Step 1: Fixtures**
+- [x] **Step 1: Fixtures**
   Files (each a realistic namespace, 30–80 lines, deliberately mis-indented and with whitespace noise so the formatter has work to do):
   - `basic.clj` — defn/let/when/cond/->, maps and vectors, comments, strings with `\"`, regex literals, char literals, `#_` and `#{}`.
   - `aliases.clj` — `(:require [x.y :as xy] [a.b :refer [thing]])` with `xy/…` and `thing` heads, plus an unqualified head matched by a key qualified with the file's own namespace, all used against qualified keys in `extra_indents.edn`.
@@ -300,17 +300,17 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
   - `reader_conditionals.cljc` — `#?(:clj … :cljs …)`, multi-arity fns, metadata on defs.
   Configs: `default.edn` (`{}`), `cursive.edn`, `zprint.edn`, `extra_indents.edn` (regex `#re` key + qualified keys), `lgx.edn` (copy of `../lgx/.cljfmt.edn` minus `:paths`/`:file-pattern`/`:parallel?`), `all_whitespace_flags.edn` (`:remove-multiple-non-indenting-spaces?`, `:remove-blank-lines-in-forms?`, `:indent-line-comments?`, `:normalize-newlines-at-file-end?` all true).
 
-- [ ] **Step 2: JVM side**
+- [x] **Step 2: JVM side**
   `parity.jvm/-main`: for every fixture × config, read the config with cljfmt's real reader (`cljfmt.config` — `read-config` on the file; check in the vendored source whether legacy-key conversion happens inside it or in `load-config`, and mirror the CLI's path), format with `cljfmt.core/reformat-string`, write `target/parity/jvm/<fixture>__<config>.out`. Refer to private vars with `#'` where needed.
   Run: `clojure -M:parity -m parity.jvm && ls target/parity/jvm | wc -l`
   Expected: `30` files (5 fixtures × 6 configs).
 
-- [ ] **Step 3: JS side and diff**
+- [x] **Step 3: JS side and diff**
   `scripts/parity/js.mjs`: same loop via `require("../../dist/cljfmt.js")`: `reformatString(text, readConfig(edn))`, write `target/parity/js/…`. `bb parity`: depends on `build`; runs both sides, then compares file by file; on any mismatch prints `diff -u` and exits 1; prints `parity: N/N identical` on success. `bb check` = `build`, `test`, `parity`.
   Run: `bb check`
   Expected: `parity: 30/30 identical`. If a config-reading difference appears (not a formatting one), fix `read-config` in the wrapper — the JVM path is the spec. If a *formatting* difference appears, that is a cljfmt CLJS-branch divergence: record it in README under "Known divergences" only after confirming against cljfmt's source, and add a wrapper shim only if it is as bounded as the alias one.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
   `git add -A && git commit -m "Add JVM-vs-JS parity harness and bb check"`
 
 ### Task 7: CI
