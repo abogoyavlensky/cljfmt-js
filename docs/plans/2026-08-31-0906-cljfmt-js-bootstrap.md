@@ -334,20 +334,20 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 - Create: `.github/workflows/release.yml`
 - Modify: `bb.edn`, `README.md`
 
-- [ ] **Step 1: bb tag**
+- [x] **Step 1: bb tag**
   Port clj-pulse's `tag` task: read `version` from `package.json` (`cheshire` is built into bb), refuse if the working tree is dirty or the tag exists, `git tag v<ver>` and push the tag.
 
-- [ ] **Step 2: release.yml**
+- [x] **Step 2: release.yml**
   Trigger: `push: tags: ["v*"]`. Steps: checkout, mise-action, `npm ci`, `bb check`, `bb pack`, `sha256sum *.tgz > checksums.txt`, `softprops/action-gh-release@v2` with `generate_release_notes: true` and `files: abogoyavlensky-cljfmt-js-*.tgz, checksums.txt`. Needs `permissions: contents: write`.
 
-- [ ] **Step 3: README release section**
+- [x] **Step 3: README release section**
   Document: bump `package.json` version → commit → `bb tag` → CI publishes; assets are immutable, fix forward.
 
-- [ ] **Step 4: Release v0.1.0**
+- [x] **Step 4: Release v0.1.0**
   Run: `git add -A && git commit -m "Add release workflow" && git push && bb tag && gh run watch --exit-status && gh release view v0.1.0 --json assets --jq '.assets[].name'`
   Expected: `abogoyavlensky-cljfmt-js-0.1.0.tgz` and `checksums.txt`.
 
-- [ ] **Step 5: Consumer smoke test against the published URL**
+- [x] **Step 5: Consumer smoke test against the published URL**
   Run: `D=$(mktemp -d) && cd $D && npm init -y >/dev/null && npm install https://github.com/abogoyavlensky/cljfmt-js/releases/download/v0.1.0/abogoyavlensky-cljfmt-js-0.1.0.tgz && node -e 'console.log(require("@abogoyavlensky/cljfmt-js").cljfmtVersion)'`
   Expected: `0.16.5`. Note the `integrity` field now present in that temp `package-lock.json` — this is what makes asset immutability mandatory.
 

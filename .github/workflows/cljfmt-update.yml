@@ -1,0 +1,88 @@
+name: Update cljfmt
+
+on:
+  schedule:
+    # Mondays, 06:00 UTC.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: jdx/mise-action@v3.6.1
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: m2-${{ hashFiles('deps.edn') }}
+          restore-keys: m2-
+
+      - run: npm ci
+
+      - name: Bump cljfmt in deps.edn
+        id: bump
+        run: |
+          set -euo pipefail
+          read_version() {
+            clojure -M -e '(println (:mvn/version (get (:deps (clojure.edn/read-string (slurp "deps.edn"))) (quote dev.weavejester/cljfmt))))' \
+              | tail -1
+          }
+          old=$(read_version)
+          # antq exits non-zero when something is outdated — that is the
+          # success case here, not a failure.
+          clojure -M:outdated --upgrade --force --focus=dev.weavejester/cljfmt || true
+          if git diff --quiet deps.edn; then
+            echo "cljfmt is already at $old"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          new=$(read_version)
+          echo "cljfmt $old -> $new"
+          # deps.edn is the source of truth, but the test literal and the
+          # README table deliberately have to acknowledge every bump.
+          sed -i "s/${old}/${new}/g" test/cljfmt_js/core_test.cljs README.md
+          {
+            echo "changed=true"
+            echo "old=$old"
+            echo "new=$new"
+          } >> "$GITHUB_OUTPUT"
+
+      # A PR opened with GITHUB_TOKEN does not trigger ci.yml, so the checks
+      # have to run here for the PR body to carry a real verdict.
+      - name: Run bb check
+        id: check
+        if: steps.bump.outputs.changed == 'true'
+        continue-on-error: true
+        run: bb check
+
+      - name: Open pull request
+        if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: cljfmt-update
+          delete-branch: true
+          title: "Update cljfmt to ${{ steps.bump.outputs.new }}"
+          commit-message: "Update cljfmt to ${{ steps.bump.outputs.new }}"
+          body: |
+            Bumps `dev.weavejester/cljfmt` from `${{ steps.bump.outputs.old }}`
+            to `${{ steps.bump.outputs.new }}`, and updates the version literal
+            in `test/cljfmt_js/core_test.cljs` and the README version table to
+            match.
+
+            **`bb check`: ${{ steps.check.outcome == 'success' && '✅ passed' || '❌ failed' }}** —
+            [run log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            `bb check` covers the build, the wrapper tests, cljfmt's own test
+            suite under the CLJS build, and the JVM-vs-JS parity harness. A ❌
+            usually means cljfmt changed formatting behavior or its internals;
+            read the run log before merging.
+
+            Bump `version` in `package.json` before releasing — the README
+            table row still carries the current package version.
