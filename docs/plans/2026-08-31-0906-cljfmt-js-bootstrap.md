@@ -1,5 +1,7 @@
 # cljfmt-js Bootstrap Implementation Plan
 
+**Status: completed 2026-08-31.**
+
 > **For agentic workers:** Use executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build `cljfmt-js` — cljfmt compiled to JavaScript with shadow-cljs, verified against cljfmt's own test suite and against JVM cljfmt, and published as a tarball on GitHub Releases for the clojure-pulse-vscode extension.
@@ -357,17 +359,30 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 - Create: `.github/workflows/cljfmt-update.yml`
 - Modify: `bb.edn`, `README.md`
 
-- [ ] **Step 1: outdated task**
+
+> Deviation: Step 3 could not use `gh workflow run` — the available PAT has no
+> Actions write scope (HTTP 403). Exercised instead with a temporary
+> `push:` trigger on the throwaway `test-cljfmt-update` branch, which runs the
+> real workflow file. Both gate paths are verified: pinned at 0.16.4 it logged
+> `cljfmt 0.16.4 -> 0.16.5`, rewrote the test literal and README row, and
+> `bb check` passed in-job (49 tests, 454 assertions, parity 30/30); pinned at
+> 0.16.5 it logged `cljfmt is already at 0.16.5` and skipped both later steps.
+> The final step, opening the PR, fails with "GitHub Actions is not permitted
+> to create or approve pull requests" — a repository setting that neither the
+> PAT nor Actions can change from here. Documented in README and AGENTS.md;
+> the user must enable it. Branch and temporary trigger deleted.
+
+- [x] **Step 1: outdated task**
   `bb outdated`: `clojure -M:outdated --focus=dev.weavejester/cljfmt`. Run it once locally to confirm antq resolves and reports up to date. antq exits non-zero when something is outdated — the workflow must not treat that as failure.
 
-- [ ] **Step 2: Workflow**
+- [x] **Step 2: Workflow**
   Trigger: `schedule: cron "0 6 * * 1"` and `workflow_dispatch`. `permissions: contents: write, pull-requests: write`. Steps: checkout, mise-action, `npm ci`, `clojure -M:outdated --upgrade --force --focus=dev.weavejester/cljfmt || true`; `git diff --quiet deps.edn && exit 0` style gate (use a step output `changed`); if changed: also update the version literal in `test/cljfmt_js/core_test.cljs` and the README version table row with `sed` from the new version (read it back out of `deps.edn`), run `bb check` with `continue-on-error: true` capturing the outcome, then `peter-evans/create-pull-request@v8` with `branch: cljfmt-update`, `title: "Update cljfmt to <ver>"`, body containing the `bb check` verdict (✅/❌) and a link to the run, `delete-branch: true`.
 
-- [ ] **Step 3: Exercise the PR path once**
+- [x] **Step 3: Exercise the PR path once**
   On a throwaway branch set `deps.edn` to `0.16.4` (and the test literal), push it, `gh workflow run cljfmt-update.yml --ref <branch>`, `gh run watch`, confirm a PR appears with a ✅ body and the diff touches exactly `deps.edn`, the test literal and README row. Close the PR, delete both branches.
   Then `gh workflow run cljfmt-update.yml` on master: expected to finish with no PR (already 0.16.5).
 
-- [ ] **Step 4: README update-process section and commit**
+- [x] **Step 4: README update-process section and commit**
   `git add -A && git commit -m "Add weekly cljfmt update workflow" && git push`
 
 ### Task 10: Final docs pass
@@ -375,9 +390,73 @@ scripts/parity/js.mjs             JS side: writes target/parity/js/<fixture>__<c
 **Files:**
 - Modify: `README.md`, `AGENTS.md`
 
-- [ ] **Step 1: README complete**
+- [x] **Step 1: README complete**
   Sections: What this is (and what it is not), Install (release URL), API, `readNsContext` and windowed formatting, Versioning table, Development (`mise install`, `npm ci`, `bb check`; what `vendor/` is), Release process, cljfmt update process, Known divergences (empty or whatever Task 6 found), License (MIT + EPL notice pointer). Apply /writing-clearly.
 
-- [ ] **Step 2: Commit and push**
+- [x] **Step 2: Commit and push**
   `git commit -am "Complete README" && git push && gh run watch --exit-status`
   Expected: CI green.
+
+
+---
+
+## Completion summary
+
+All 10 tasks are done and pushed to `master`. `bb check` is green locally and
+in CI: build, 49 tests / 454 assertions (10 wrapper tests plus all 31 of
+cljfmt's own `cljfmt.core-test`, unmodified, under the CLJS build), and
+`parity: 30/30 identical` against JVM cljfmt.
+
+`v0.1.0` is released. Installing the published tarball in a clean project and
+driving it the way the extension will — Format Document on a whole file, an
+indent-on-Enter window with `readNsContext`, and error propagation — produces
+output byte-identical to JVM cljfmt.
+
+### Issues encountered
+
+1. **The plan's ns-name mechanism does not exist** (Task 4). `reformat-form`
+   overwrites its internal `::ns-name` option, so it cannot be supplied from
+   outside — on the JVM either. Reproduced through `:refer-map` instead; see
+   the Task 4 deviation note. Aliases and refers were unaffected.
+2. **`bb.edn` is read as EDN**, so `#(...)` reader literals are illegal in it.
+3. **The parity harness could report an inflated count** if a fixture were
+   renamed, because stale outputs stayed in the tree. Found by the codex
+   review; fixed by clearing `target/parity` before each run.
+4. **A release-workflow rerun would have overwritten published assets**,
+   breaking consumers' integrity hashes and contradicting the immutability
+   invariant. Found by the codex review; fixed with `overwrite_files: false`.
+5. **The README documented the ns-context precedence backwards.** Found by the
+   codex review; the implementation was correct.
+6. **`cljfmt-update.yml` cannot open its PR** until the user enables
+   *Settings -> Actions -> General -> Workflow permissions -> "Allow GitHub
+   Actions to create and approve pull requests"*. Everything up to that step is
+   verified working on a throwaway branch. This is the one outstanding item and
+   it needs repository-admin access.
+
+### Deviations
+
+- **Task 4 (mechanism):** ns-name for windows goes through `:refer-map`, not the
+  `::ns-name` option the plan named. Public API and precedence unchanged.
+- **Task 4 (ordering):** each alias/refer map is passed through `stringify-map`
+  *before* merging, matching cljfmt's own order.
+- **Task 9:** `gh workflow run` was unavailable (PAT has no Actions write
+  scope); the workflow was exercised with a temporary `push:` trigger on a
+  throwaway branch instead, covering both the bump and the no-change path.
+- **Test naming:** fixtures and tests use `mything*` rather than the plan's
+  `defthing*`. cljfmt's default indents already contain
+  `#"^def(?!ault)(?!late)(?!er)" [[:inner 0]]`, so a `def`-prefixed name
+  indents correctly even when alias resolution does nothing — the plan's
+  assertions would have passed vacuously.
+
+### What the plan could have specified better
+
+It pinned an implementation mechanism it had not verified — passing
+`:cljfmt.core/ns-name` through the options — while flagging the uncertainty only
+as "Codex's reading". The key name was right and the plan was right that the
+executor should check it, but a plan step whose stated approach cannot work is
+worth more than a hedge: "confirm this key is *read* from options and not
+overwritten; if it is overwritten, the fallback is `:refer-map`" would have
+turned a mid-task design question into a lookup. The same applies to the test
+fixtures: naming example macros `defthing` in a formatter's test suite quietly
+collided with the tool's own default rules, which a moment of checking cljfmt's
+`default-indents` at planning time would have caught.

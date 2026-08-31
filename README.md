@@ -84,6 +84,30 @@ Formatting a whole file needs no context: cljfmt finds the `ns` form itself.
 | --- | --- |
 | 0.1.0 | 0.16.5 |
 
+## Development
+
+```sh
+mise install   # java, clojure, node, babashka — versions pinned in mise.toml
+npm ci
+bb check       # build + tests + parity. CI runs exactly this.
+```
+
+Individual tasks: `bb build`, `bb test`, `bb parity`, `bb pack`, `bb outdated`,
+`bb tag`. Run `bb tasks` for the list.
+
+`bb test` runs two suites in one node process: this wrapper's tests, and
+cljfmt's own `cljfmt.core-test` compiled under our ClojureScript build. Those
+upstream tests do not ship in the jar, so `bb vendor` shallow-clones cljfmt at
+the pinned tag into `vendor/` first. `vendor/` is gitignored and disposable —
+delete it and the next `bb test` re-creates it.
+
+`bb parity` is the check that really protects the port: it formats every
+`test/fixtures/*` under every `test/fixtures/configs/*.edn` twice — once with
+real JVM cljfmt through `cljfmt.config/load-config`, the CLI's own path, and
+once through the built `dist/cljfmt.js` — and diffs the two trees. There are no
+checked-in expected outputs; the JVM is the oracle and `deps.edn` pins the one
+version both sides use.
+
 ## Release
 
 1. Bump `version` in `package.json` (and the table above).
@@ -114,6 +138,21 @@ merging, bump `version` in `package.json` and release.
 > pull requests"*. Without it the workflow does all its work and then fails the
 > last step with `GitHub Actions is not permitted to create or approve pull
 > requests`.
+
+## Known divergences
+
+None. The current fixture matrix (5 files x 6 configs) is byte-identical to
+JVM cljfmt, and cljfmt's own test suite passes unmodified under this build.
+
+Two behaviors are worth knowing about, neither of them a divergence:
+
+- Formatting a window without an `NsContext` can differ from formatting the
+  whole file, because the window has no `ns` form to resolve names against.
+  That is what `readNsContext` is for.
+- cljfmt compiles its `ns`-form parsing on the JVM only, so this package ports
+  it (`src/cljfmt_js/ns_aliases.cljs`). Without that port, any config with a
+  namespace-qualified indent key would silently format differently here than
+  in the CLI. `bb parity` covers exactly this case.
 
 ## License
 
