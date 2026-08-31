@@ -28,7 +28,10 @@
 
   parity {:doc "Diff JS output against JVM cljfmt over every fixture x config"
           :depends [build]
-          :task (do (shell "clojure -M:parity -m parity.jvm")
+          :task (do ;; Stale outputs from a renamed or deleted fixture would be
+                    ;; compared to each other and inflate the identical count.
+                    (fs/delete-tree "target/parity")
+                    (shell "clojure -M:parity -m parity.jvm")
                     (shell "node scripts/parity/js.mjs")
                     (let [jvm-dir "target/parity/jvm"
                           js-dir  "target/parity/js"
