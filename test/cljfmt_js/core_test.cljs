@@ -62,4 +62,4 @@
 (deftest cljfmt-version-is-the-bundled-version
   (is (re-matches #"^\d+\.\d+\.\d+$" sut/cljfmt-version))
   ;; Bumped by the weekly cljfmt-update PR, together with deps.edn.
-  (is (= "0.16.5" sut/cljfmt-version)))
+  (is (= "0.16.6" sut/cljfmt-version)))
