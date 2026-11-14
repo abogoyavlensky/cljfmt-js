@@ -82,7 +82,7 @@ Formatting a whole file needs no context: cljfmt finds the `ns` form itself.
 
 | cljfmt-js | cljfmt |
 | --- | --- |
-| 0.1.0 | 0.16.5 |
+| 0.1.0 | 0.16.6 |
 
 ## Development
 
